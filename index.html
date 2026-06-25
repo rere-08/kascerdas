@@ -1034,6 +1034,104 @@ select.form-control {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 100px; }
+
+/* ─── REPORT TABS ─── */
+.report-tab-group {
+  display: flex;
+  gap: 4px;
+  background: var(--slate-100);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  width: fit-content;
+}
+
+.report-tab-btn {
+  padding: 7px 18px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--slate-500);
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.report-tab-btn:hover { background: var(--white); color: var(--slate-800); }
+.report-tab-btn.active { background: var(--white); color: var(--slate-900); box-shadow: var(--shadow-sm); }
+
+/* ─── RECORDER CARD ─── */
+.recorder-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--slate-200);
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.recorder-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--slate-100);
+  flex-wrap: wrap;
+}
+
+.recorder-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.recorder-info { flex: 1; min-width: 0; }
+.recorder-name { font-size: 17px; font-weight: 800; color: var(--slate-900); }
+.recorder-tx-count { font-size: 12px; color: var(--slate-400); font-weight: 600; margin-top: 2px; }
+
+.recorder-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.recorder-stat-item { text-align: right; }
+.recorder-stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--slate-400); }
+.recorder-stat-value { font-size: 14px; font-weight: 800; font-family: var(--mono); margin-top: 2px; }
+
+.recorder-contrib-bar {
+  height: 6px;
+  background: var(--slate-100);
+  border-radius: 100px;
+  overflow: hidden;
+  margin: 0 24px 16px;
+}
+.recorder-contrib-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--navy), var(--emerald));
+  transition: width 0.8s cubic-bezier(.4,0,.2,1);
+}
+
+/* search total bar */
+.search-total-bar {
+  display: flex;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-100);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.search-total-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.search-total-label { color: var(--slate-500); font-weight: 600; }
+.search-total-value { font-family: var(--mono); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -1369,12 +1467,26 @@ select.form-control {
     <div class="page" id="page-reports">
       <div class="page-header">
         <div>
-          <div class="page-title">Laporan Bulanan</div>
-          <div class="page-sub">Rekap dan tren keuangan per bulan</div>
+          <div class="page-title">Laporan Keuangan</div>
+          <div class="page-sub">Rekap dan tren keuangan per bulan &amp; per pencatat</div>
         </div>
-        <select class="form-control" style="width:auto" id="reportYear" onchange="loadReports()"></select>
+        <select class="form-control" style="width:auto" id="reportYear" onchange="onReportYearChange()"></select>
       </div>
 
+      <!-- Tab Toggle -->
+      <div class="report-tab-group">
+        <button class="report-tab-btn active" id="rptTabMonth" onclick="switchReportTab('month')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Laporan Bulanan
+        </button>
+        <button class="report-tab-btn" id="rptTabRecorder" onclick="switchReportTab('recorder')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Laporan per Pencatat
+        </button>
+      </div>
+
+      <!-- Panel Bulanan -->
+      <div id="rptPanelMonth">
       <div class="stats-grid" style="margin-bottom:20px">
         <div class="stat-card balance">
           <div class="stat-label">Rata-rata Pemasukan</div>
@@ -1407,6 +1519,12 @@ select.form-control {
       </div>
 
       <div id="reportsList"></div>
+      </div><!-- /rptPanelMonth -->
+
+      <!-- Panel Per Pencatat -->
+      <div id="rptPanelRecorder" style="display:none">
+        <div id="recorderReportList"></div>
+      </div>
     </div>
 
     <!-- ═══════ KATEGORI ═══════ -->
@@ -1488,6 +1606,27 @@ select.form-control {
       <div class="table-card">
         <div class="table-card-header">
           <div class="table-card-title" id="searchResultLabel">Hasil Pencarian</div>
+        </div>
+        <div id="searchTotalBar" class="search-total-bar" style="display:none">
+          <div class="search-total-item">
+            <span class="search-total-label">Pemasukan:</span>
+            <span class="search-total-value amount-income" id="searchTotalIncome">Rp 0</span>
+          </div>
+          <div style="color:var(--slate-300)">|</div>
+          <div class="search-total-item">
+            <span class="search-total-label">Pengeluaran:</span>
+            <span class="search-total-value amount-expense" id="searchTotalExpense">Rp 0</span>
+          </div>
+          <div style="color:var(--slate-300)">|</div>
+          <div class="search-total-item">
+            <span class="search-total-label">Saldo:</span>
+            <span class="search-total-value" id="searchTotalBalance">Rp 0</span>
+          </div>
+          <div style="color:var(--slate-300)">|</div>
+          <div class="search-total-item">
+            <span class="search-total-label">Transaksi:</span>
+            <span class="search-total-value" id="searchTotalCount">0</span>
+          </div>
         </div>
         <div style="overflow-x:auto">
           <table>
@@ -1721,7 +1860,7 @@ function navigate(page) {
   if (page === 'income') loadIncomeTx();
   if (page === 'expense') loadExpenseTx();
   if (page === 'analysis') loadAnalysis();
-  if (page === 'reports') loadReports();
+  if (page === 'reports') { currentReportTab = 'month'; document.getElementById('rptTabMonth').classList.add('active'); document.getElementById('rptTabRecorder').classList.remove('active'); document.getElementById('rptPanelMonth').style.display=''; document.getElementById('rptPanelRecorder').style.display='none'; loadReports(); }
   if (page === 'categories') loadCategoryPage();
   if (page === 'search') loadSearchCategories();
   if (page === 'export') loadExportPage();
@@ -2278,6 +2417,22 @@ function renderRecommendations(data) {
 }
 
 // ─── REPORTS ───
+let currentReportTab = 'month';
+
+function switchReportTab(tab) {
+  currentReportTab = tab;
+  document.getElementById('rptTabMonth').classList.toggle('active', tab === 'month');
+  document.getElementById('rptTabRecorder').classList.toggle('active', tab === 'recorder');
+  document.getElementById('rptPanelMonth').style.display = tab === 'month' ? '' : 'none';
+  document.getElementById('rptPanelRecorder').style.display = tab === 'recorder' ? '' : 'none';
+  if (tab === 'recorder') loadRecorderReports();
+}
+
+function onReportYearChange() {
+  if (currentReportTab === 'month') loadReports();
+  else loadRecorderReports();
+}
+
 async function loadReports() {
   const year = document.getElementById('reportYear').value;
   showLoading();
@@ -2293,6 +2448,10 @@ async function loadReports() {
     trendEl.className = 'stat-value ' + (summary.trend === 'naik' ? 'negative' : summary.trend === 'turun' ? 'positive' : '');
 
     const container = document.getElementById('reportsList');
+    if (!reports.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Tidak ada laporan</div><div class="empty-desc">Belum ada data untuk tahun ini</div></div>`;
+      return;
+    }
     container.innerHTML = reports.slice().reverse().map(r => `
       <div class="report-month-card">
         <div class="report-month-header" onclick="toggleReport(this)">
@@ -2325,6 +2484,123 @@ async function loadReports() {
           ).join('') : '<div style="font-size:12px;color:var(--slate-400)">Tidak ada pengeluaran</div>'}
         </div>
       </div>`).join('');
+  } catch(e) { console.error(e); }
+  finally { hideLoading(); }
+}
+
+// Warna & emoji per pencatat
+const RECORDER_META = {
+  'Papa':  { emoji: '👨', bg: '#e8edff', color: 'var(--navy)' },
+  'Mama':  { emoji: '👩', bg: '#fce7f3', color: '#be185d' },
+  'Anak':  { emoji: '🧒', bg: '#d1fae5', color: 'var(--emerald)' },
+};
+function recorderMeta(name) {
+  return RECORDER_META[name] || { emoji: '👤', bg: 'var(--slate-100)', color: 'var(--slate-600)' };
+}
+
+async function loadRecorderReports() {
+  const year = document.getElementById('reportYear').value;
+  showLoading();
+  try {
+    // Ambil semua transaksi tahun ini
+    let url = '/api/transactions?';
+    if (year) url += `start_date=${year}-01-01&end_date=${year}-12-31&`;
+    const txs = await api(url);
+
+    if (!txs.length) {
+      document.getElementById('recorderReportList').innerHTML =
+        `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Tidak ada data</div><div class="empty-desc">Belum ada transaksi untuk tahun ini</div></div>`;
+      return;
+    }
+
+    // Hitung total keseluruhan untuk persentase kontribusi
+    const grandTotalIncome  = txs.filter(t => t.type === 'income').reduce((s,t) => s + parseFloat(t.amount), 0);
+    const grandTotalExpense = txs.filter(t => t.type === 'expense').reduce((s,t) => s + parseFloat(t.amount), 0);
+    const grandTotal = grandTotalIncome + grandTotalExpense;
+
+    // Kelompokkan per pencatat
+    const groups = {};
+    txs.forEach(tx => {
+      const rec = tx.recorderName || 'Tidak Diketahui';
+      if (!groups[rec]) groups[rec] = [];
+      groups[rec].push(tx);
+    });
+
+    // Urutkan pencatat berdasarkan jumlah transaksi
+    const recorderNames = Object.keys(groups).sort((a,b) => groups[b].length - groups[a].length);
+
+    document.getElementById('recorderReportList').innerHTML = recorderNames.map(name => {
+      const list = groups[name];
+      const income  = list.filter(t => t.type === 'income').reduce((s,t) => s + parseFloat(t.amount), 0);
+      const expense = list.filter(t => t.type === 'expense').reduce((s,t) => s + parseFloat(t.amount), 0);
+      const balance = income - expense;
+      const myTotal = income + expense;
+      const contribPct = grandTotal > 0 ? (myTotal / grandTotal * 100).toFixed(1) : '0.0';
+      const meta = recorderMeta(name);
+
+      // Tabel transaksi per pencatat
+      const rows = list.map(tx => `<tr>
+        <td>${fmtDate(tx.date)}</td>
+        <td><span class="badge badge-${tx.type}">${tx.type==='income'?'Pemasukan':'Pengeluaran'}</span></td>
+        <td>${tx.categoryName}</td>
+        <td>${tx.description || '-'}</td>
+        <td>${tx.status ? `<span class="badge badge-${tx.status}">${tx.status==='need'?'Kebutuhan':'Keinginan'}</span>` : '-'}</td>
+        <td style="text-align:right"><span class="amount-cell amount-${tx.type}">${tx.type==='income'?'+':'-'} ${fmtRp(tx.amount)}</span></td>
+      </tr>`).join('');
+
+      const totalRow = `<tr style="background:var(--slate-50);border-top:2px solid var(--slate-200)">
+        <td colspan="5" style="font-weight:700;color:var(--slate-700)">TOTAL</td>
+        <td style="text-align:right">
+          <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">
+            <span class="amount-cell amount-income" style="font-size:12px">+ ${fmtRp(income)}</span>
+            <span class="amount-cell amount-expense" style="font-size:12px">- ${fmtRp(expense)}</span>
+            <span class="amount-cell ${balance>=0?'amount-income':'amount-expense'}" style="font-size:13px;border-top:1px solid var(--slate-200);padding-top:2px">${balance>=0?'+':'-'} ${fmtRp(Math.abs(balance))}</span>
+          </div>
+        </td>
+      </tr>`;
+
+      return `<div class="recorder-card">
+        <div class="recorder-card-header">
+          <div class="recorder-avatar" style="background:${meta.bg};color:${meta.color}">${meta.emoji}</div>
+          <div class="recorder-info">
+            <div class="recorder-name">${name}</div>
+            <div class="recorder-tx-count">${list.length} transaksi · Kontribusi ${contribPct}% dari total keseluruhan</div>
+          </div>
+          <div class="recorder-stats">
+            <div class="recorder-stat-item">
+              <div class="recorder-stat-label">Pemasukan</div>
+              <div class="recorder-stat-value amount-income">+${fmtRp(income)}</div>
+            </div>
+            <div class="recorder-stat-item">
+              <div class="recorder-stat-label">Pengeluaran</div>
+              <div class="recorder-stat-value amount-expense">-${fmtRp(expense)}</div>
+            </div>
+            <div class="recorder-stat-item">
+              <div class="recorder-stat-label">Saldo Akhir</div>
+              <div class="recorder-stat-value ${balance>=0?'amount-income':'amount-expense'}">${balance>=0?'+':'-'}${fmtRp(Math.abs(balance))}</div>
+            </div>
+          </div>
+        </div>
+        <div class="recorder-contrib-bar">
+          <div class="recorder-contrib-fill" style="width:${contribPct}%"></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Jenis</th>
+                <th>Kategori</th>
+                <th>Keterangan</th>
+                <th>Status</th>
+                <th style="text-align:right">Nominal</th>
+              </tr>
+            </thead>
+            <tbody>${rows}${totalRow}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
   } catch(e) { console.error(e); }
   finally { hideLoading(); }
 }
@@ -2447,6 +2723,26 @@ async function _doSearch() {
     const label = document.getElementById('searchResultLabel');
     label.textContent = `Hasil Pencarian (${txs.length} transaksi)`;
 
+    // ── Hitung total sesuai filter ──
+    let totalIncome = 0, totalExpense = 0;
+    txs.forEach(tx => {
+      if (tx.type === 'income') totalIncome += parseFloat(tx.amount);
+      else totalExpense += parseFloat(tx.amount);
+    });
+    const balance = totalIncome - totalExpense;
+    const totalBar = document.getElementById('searchTotalBar');
+    if (txs.length > 0) {
+      totalBar.style.display = 'flex';
+      document.getElementById('searchTotalIncome').textContent = fmtRp(totalIncome);
+      document.getElementById('searchTotalExpense').textContent = fmtRp(totalExpense);
+      const balEl = document.getElementById('searchTotalBalance');
+      balEl.textContent = fmtRp(Math.abs(balance));
+      balEl.className = 'search-total-value ' + (balance >= 0 ? 'amount-income' : 'amount-expense');
+      document.getElementById('searchTotalCount').textContent = txs.length;
+    } else {
+      totalBar.style.display = 'none';
+    }
+
     const tbody = document.getElementById('searchBody');
     if (!txs.length) {
       tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">&#128269;</div><div class="empty-title">Tidak ditemukan</div><div class="empty-desc">Coba ubah filter pencarian</div></div></td></tr>`;
@@ -2469,7 +2765,18 @@ async function _doSearch() {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
         </button>
       </td>
-    </tr>`).join('');
+    </tr>`).join('') +
+    `<tr style="background:var(--slate-50);border-top:2px solid var(--slate-200)">
+      <td colspan="6" style="font-weight:700;color:var(--slate-700);font-size:13px">TOTAL HASIL FILTER</td>
+      <td style="text-align:right">
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">
+          <span class="amount-cell amount-income" style="font-size:12px">+ ${fmtRp(totalIncome)}</span>
+          <span class="amount-cell amount-expense" style="font-size:12px">- ${fmtRp(totalExpense)}</span>
+          <span class="amount-cell ${balance>=0?'amount-income':'amount-expense'}" style="font-size:13px;border-top:1px solid var(--slate-200);padding-top:2px">${balance>=0?'+':'-'} ${fmtRp(Math.abs(balance))}</span>
+        </div>
+      </td>
+      <td></td>
+    </tr>`;
   } catch(e) { console.error(e); }
 }
 

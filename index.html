@@ -484,6 +484,21 @@ tbody tr:hover td { background: var(--slate-50); }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 .btn-icon { padding: 7px; }
 
+.btn-refresh {
+  gap: 7px;
+  min-width: 104px;
+}
+.btn-refresh .refresh-icon {
+  transition: transform 0.3s ease;
+}
+.btn-refresh.loading .refresh-icon {
+  animation: spin 0.7s linear infinite;
+}
+.btn-refresh:disabled {
+  cursor: wait;
+  opacity: .7;
+}
+
 /* ─── FORMS ─── */
 .form-grid {
   display: grid;
@@ -1250,9 +1265,20 @@ select.form-control {
           <div class="page-title">Dashboard Keuangan</div>
           <div class="page-sub" id="dashPeriodLabel"></div>
         </div>
-        <div class="period-picker">
-          <button class="period-btn active" id="monthBtn" onclick="setDashPeriod('month')">Bulan Ini</button>
-          <button class="period-btn" id="yearBtn" onclick="setDashPeriod('year')">Tahun Ini</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="period-picker">
+            <button class="period-btn active" id="monthBtn" onclick="setDashPeriod('month')">Bulan Ini</button>
+            <button class="period-btn" id="yearBtn" onclick="setDashPeriod('year')">Tahun Ini</button>
+          </div>
+          <button class="btn btn-outline btn-sm btn-refresh" id="dashboardRefreshBtn" onclick="refreshDashboard()" title="Refresh data dashboard">
+            <svg class="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10"/>
+              <path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14"/>
+            </svg>
+            Refresh
+          </button>
         </div>
       </div>
 
@@ -2047,6 +2073,28 @@ async function loadDashRecentTx() {
         <td style="text-align:right"><span class="amount-cell amount-${tx.type}">${tx.type==='income'?'+':'-'} ${fmtRp(tx.amount)}</span></td>
       </tr>`).join('');
   } catch(e) { console.error(e); }
+}
+
+async function refreshDashboard() {
+  const btn = document.getElementById('dashboardRefreshBtn');
+  if (!btn || btn.disabled) return;
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  try {
+    await Promise.all([
+      loadDashboard(),
+      loadDashRecentTx()
+    ]);
+    toast('Dashboard berhasil diperbarui');
+  } catch(e) {
+    console.error(e);
+    toast('Gagal memperbarui dashboard', true);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
 }
 
 function setDashPeriod(p) {
